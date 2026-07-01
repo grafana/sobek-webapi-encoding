@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/grafana/sobek"
-	"github.com/stretchr/testify/require"
 )
 
 // testScript is a helper struct holding the base path
@@ -42,11 +41,35 @@ func newTestSetup(t testing.TB) *testSetup {
 	rt := sobek.New()
 	rt.SetFieldNameMapper(sobek.TagFieldNameMapper("json", true))
 
-	require.NoError(t, RegisterRuntime(rt))
+	mustNoError(t, RegisterRuntime(rt))
 
 	ts := &testSetup{rt: rt}
-	require.NoError(t, testExecuteTestScripts(ts))
+	mustNoError(t, testExecuteTestScripts(ts))
 	return ts
+}
+
+func mustNoError(t testing.TB, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func mustError(t testing.TB, err error) {
+	t.Helper()
+
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func mustEqual[T comparable](t testing.TB, expected, actual T) {
+	t.Helper()
+
+	if expected != actual {
+		t.Fatalf("expected %#v, got %#v", expected, actual)
+	}
 }
 
 func testExecuteTestScripts(ts *testSetup) error {

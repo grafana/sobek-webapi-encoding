@@ -2,8 +2,6 @@ package encoding
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 // TestTextEncoder runs the Web Platform Tests for TextEncoder.
@@ -18,5 +16,5 @@ func TestTextEncoder(t *testing.T) {
 
 	ts := newTestSetup(t)
 	err := executeTestScripts(ts, scripts)
-	require.NoError(t, err)
+	mustNoError(t, err)
 }
