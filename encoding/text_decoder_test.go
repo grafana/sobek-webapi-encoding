@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"golang.org/x/text/encoding/unicode"
 )
 
@@ -28,7 +27,7 @@ func TestTextDecoder(t *testing.T) {
 
 	ts := newTestSetup(t)
 	err := executeTestScripts(ts, scripts)
-	require.NoError(t, err)
+	mustNoError(t, err)
 }
 
 func TestTextDecoderUTF8StreamingStateMachine(t *testing.T) {
@@ -44,16 +43,16 @@ func TestTextDecoderUTF8StreamingStateMachine(t *testing.T) {
 		}
 
 		out, err := td.Decode([]byte{0xF0, 0x9F}, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "", out)
+		mustNoError(t, err)
+		mustEqual(t, "", out)
 
 		out, err = td.Decode([]byte{0x41}, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "\uFFFDA", out)
+		mustNoError(t, err)
+		mustEqual(t, "\uFFFDA", out)
 
 		out, err = td.Decode(nil, TextDecodeOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "", out)
+		mustNoError(t, err)
+		mustEqual(t, "", out)
 	})
 
 	t.Run("ImmediateInvalidStartByte", func(t *testing.T) {
@@ -66,12 +65,12 @@ func TestTextDecoderUTF8StreamingStateMachine(t *testing.T) {
 		}
 
 		out, err := td.Decode([]byte{0xC1}, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "\uFFFD", out)
+		mustNoError(t, err)
+		mustEqual(t, "\uFFFD", out)
 
 		out, err = td.Decode(nil, TextDecodeOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "", out)
+		mustNoError(t, err)
+		mustEqual(t, "", out)
 	})
 
 	t.Run("ASCIIStreamingProducesOutput", func(t *testing.T) {
@@ -84,16 +83,16 @@ func TestTextDecoderUTF8StreamingStateMachine(t *testing.T) {
 		}
 
 		out, err := td.Decode([]byte("A"), TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "A", out)
+		mustNoError(t, err)
+		mustEqual(t, "A", out)
 
 		out, err = td.Decode([]byte("B"), TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "B", out)
+		mustNoError(t, err)
+		mustEqual(t, "B", out)
 
 		out, err = td.Decode(nil, TextDecodeOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "", out)
+		mustNoError(t, err)
+		mustEqual(t, "", out)
 	})
 
 	t.Run("FatalFlushOnTruncatedSequence", func(t *testing.T) {
@@ -107,7 +106,7 @@ func TestTextDecoderUTF8StreamingStateMachine(t *testing.T) {
 		}
 
 		_, err := td.Decode([]byte{0xF0, 0x9F}, TextDecodeOptions{})
-		require.Error(t, err)
+		mustError(t, err)
 	})
 }
 
@@ -129,12 +128,12 @@ func TestTextDecoderUTF16FatalStreaming(t *testing.T) {
 		td := newFatalDecoder()
 
 		out, err := td.Decode([]byte{0x00}, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "", out)
+		mustNoError(t, err)
+		mustEqual(t, "", out)
 
 		out, err = td.Decode([]byte{0x00}, TextDecodeOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "\u0000", out)
+		mustNoError(t, err)
+		mustEqual(t, "\u0000", out)
 	})
 
 	t.Run("EvenThenOddThrows", func(t *testing.T) {
@@ -142,11 +141,11 @@ func TestTextDecoderUTF16FatalStreaming(t *testing.T) {
 		td := newFatalDecoder()
 
 		out, err := td.Decode([]byte{0x00, 0x00}, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "\u0000", out)
+		mustNoError(t, err)
+		mustEqual(t, "\u0000", out)
 
 		_, err = td.Decode([]byte{0x00}, TextDecodeOptions{})
-		require.Error(t, err)
+		mustError(t, err)
 	})
 
 	t.Run("OddThenEvenThrows", func(t *testing.T) {
@@ -154,11 +153,11 @@ func TestTextDecoderUTF16FatalStreaming(t *testing.T) {
 		td := newFatalDecoder()
 
 		out, err := td.Decode([]byte{0x00}, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "", out)
+		mustNoError(t, err)
+		mustEqual(t, "", out)
 
 		_, err = td.Decode([]byte{0x00, 0x00}, TextDecodeOptions{})
-		require.Error(t, err)
+		mustError(t, err)
 	})
 
 	t.Run("EvenChunksStreamSuccessfully", func(t *testing.T) {
@@ -166,12 +165,12 @@ func TestTextDecoderUTF16FatalStreaming(t *testing.T) {
 		td := newFatalDecoder()
 
 		out, err := td.Decode([]byte{0x00, 0x00}, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
-		require.Equal(t, "\u0000", out)
+		mustNoError(t, err)
+		mustEqual(t, "\u0000", out)
 
 		out, err = td.Decode([]byte{0x00, 0x00}, TextDecodeOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "\u0000", out)
+		mustNoError(t, err)
+		mustEqual(t, "\u0000", out)
 	})
 }
 
@@ -198,13 +197,13 @@ func TestTextDecoderUTF16LEStreamingSingleByteWindow(t *testing.T) {
 	for _, b := range encoded {
 		chunk := []byte{b}
 		part, err := td.Decode(chunk, TextDecodeOptions{Stream: true})
-		require.NoError(t, err)
+		mustNoError(t, err)
 		out.WriteString(part)
 	}
 
 	part, err := td.Decode(nil, TextDecodeOptions{})
-	require.NoError(t, err)
+	mustNoError(t, err)
 	out.WriteString(part)
 
-	require.Equal(t, expected, out.String())
+	mustEqual(t, expected, out.String())
 }
