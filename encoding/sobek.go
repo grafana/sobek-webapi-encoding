@@ -223,7 +223,7 @@ func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 
 		// Extract the relevant portion of the ArrayBuffer
 		allBytes := ab.Bytes()
-		if byteOffset < 0 || byteOffset >= int64(len(allBytes)) {
+		if byteOffset < 0 || byteOffset > int64(len(allBytes)) {
 			return nil, errors.New("data view byte offset out of bounds")
 		}
 
