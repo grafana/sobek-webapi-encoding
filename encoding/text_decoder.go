@@ -217,10 +217,14 @@ func (td *TextDecoder) decodeUTF16(buffer []byte, options TextDecodeOptions) (st
 	var decoded string
 	var err error
 	var consumed int
+	var hadInvalid bool
 
 	if processLen > 0 {
 		toDecode := td.buffer[:processLen]
 		decoded, consumed, err = td.applyTransform(toDecode, !stream)
+		if consumed > 0 {
+			hadInvalid = hasInvalidUTF16Surrogate(toDecode[:consumed], td.Encoding == UTF16BEEncodingFormat)
+		}
 		td.buffer = append(td.buffer[:0], td.buffer[consumed:]...)
 	} else {
 		decoded, _, err = td.applyTransform(nil, !stream)
@@ -246,13 +250,9 @@ func (td *TextDecoder) decodeUTF16(buffer []byte, options TextDecodeOptions) (st
 
 	result := builder.String()
 
-	if td.Fatal {
-		for _, r := range result {
-			if r == '\uFFFD' {
-				td.resetState()
-				return "", NewError(TypeError, "decoding text: invalid byte sequence")
-			}
-		}
+	if td.Fatal && hadInvalid {
+		td.resetState()
+		return "", NewError(TypeError, "decoding text: invalid byte sequence")
 	}
 
 	if !stream {
@@ -260,6 +260,52 @@ func (td *TextDecoder) decodeUTF16(buffer []byte, options TextDecodeOptions) (st
 	}
 
 	return result, nil
+}
+
+// hasInvalidUTF16Surrogate reports whether data (a sequence of 2-byte code
+// units in the given endianness) contains a lone/unpaired UTF-16 surrogate.
+//
+// The x/text UTF-16 decoder substitutes such sequences with U+FFFD without
+// surfacing an error, so this scans the source bytes directly rather than
+// inferring invalidity from the decoded output (which cannot distinguish a
+// substitution from a legitimately-encoded U+FFFD character).
+func hasInvalidUTF16Surrogate(data []byte, bigEndian bool) bool {
+	for i := 0; i+1 < len(data); i += 2 {
+		unit := decodeUTF16CodeUnit(data[i], data[i+1], bigEndian)
+
+		switch {
+		case isUTF16HighSurrogate(unit):
+			if i+3 >= len(data) {
+				return true
+			}
+
+			next := decodeUTF16CodeUnit(data[i+2], data[i+3], bigEndian)
+			if !isUTF16LowSurrogate(next) {
+				return true
+			}
+
+			i += 2
+		case isUTF16LowSurrogate(unit):
+			return true
+		}
+	}
+
+	return false
+}
+
+func decodeUTF16CodeUnit(b0, b1 byte, bigEndian bool) uint16 {
+	if bigEndian {
+		return uint16(b0)<<8 | uint16(b1)
+	}
+	return uint16(b1)<<8 | uint16(b0)
+}
+
+func isUTF16HighSurrogate(u uint16) bool {
+	return u >= 0xD800 && u <= 0xDBFF
+}
+
+func isUTF16LowSurrogate(u uint16) bool {
+	return u >= 0xDC00 && u <= 0xDFFF
 }
 
 // applyTransform applies the decoder's transformer to the input bytes and returns
