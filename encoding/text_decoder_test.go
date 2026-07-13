@@ -207,3 +207,31 @@ func TestTextDecoderUTF16LEStreamingSingleByteWindow(t *testing.T) {
 
 	mustEqual(t, expected, out.String())
 }
+
+// TestExportArrayBufferReturnsACopy guards exportArrayBuffer's documented
+// contract that it returns a copy of the underlying bytes, not a slice
+// aliasing the live ArrayBuffer's backing store.
+func TestExportArrayBufferReturnsACopy(t *testing.T) {
+	t.Parallel()
+
+	ts := newTestSetup(t)
+
+	v, err := ts.rt.RunScript("test.js", `
+		var buf = new ArrayBuffer(3);
+		var view = new Uint8Array(buf);
+		view[0] = 1;
+		view[1] = 2;
+		view[2] = 3;
+		view;
+	`)
+	mustNoError(t, err)
+
+	data, err := exportArrayBuffer(ts.rt, v)
+	mustNoError(t, err)
+	mustEqual(t, string([]byte{1, 2, 3}), string(data))
+
+	_, err = ts.rt.RunScript("mutate.js", `view[0] = 0xFF; view[1] = 0xFF; view[2] = 0xFF;`)
+	mustNoError(t, err)
+
+	mustEqual(t, string([]byte{1, 2, 3}), string(data))
+}

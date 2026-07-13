@@ -188,6 +188,7 @@ func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 
 	var ab sobek.ArrayBuffer
 	var ok bool
+	var region []byte
 
 	switch {
 	case IsTypedArray(rt, v):
@@ -209,7 +210,7 @@ func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 		if end > int64(len(allBytes)) {
 			end = int64(len(allBytes))
 		}
-		return allBytes[byteOffset:end], nil
+		region = allBytes[byteOffset:end]
 	case IsInstanceOf(rt, v, DataViewConstructor):
 		// Handle DataView objects
 		ab, ok = asObject.Get("buffer").Export().(sobek.ArrayBuffer)
@@ -231,15 +232,21 @@ func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 		if end > int64(len(allBytes)) {
 			end = int64(len(allBytes))
 		}
-		return allBytes[byteOffset:end], nil
+		region = allBytes[byteOffset:end]
 	default:
 		ab, ok = asObject.Export().(sobek.ArrayBuffer)
 		if !ok {
 			return nil, errors.New("data is not an ArrayBuffer, typed array, or DataView")
 		}
+		region = ab.Bytes()
 	}
 
-	return ab.Bytes(), nil
+	// Copy out of the ArrayBuffer's backing store: the caller owns the
+	// returned slice and the JS side may resize/write into the buffer
+	// after this call returns, per the documented "copy" contract above.
+	dst := make([]byte, len(region))
+	copy(dst, region)
+	return dst, nil
 }
 
 // IsInstanceOf returns true if the given value is an instance of the given constructor
