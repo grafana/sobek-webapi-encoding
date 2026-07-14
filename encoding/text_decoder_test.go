@@ -172,6 +172,35 @@ func TestTextDecoderUTF16FatalStreaming(t *testing.T) {
 		mustNoError(t, err)
 		mustEqual(t, "\u0000", out)
 	})
+
+	t.Run("LegitimateReplacementCharacterDoesNotThrow", func(t *testing.T) {
+		t.Parallel()
+		td := newFatalDecoder()
+
+		// 0xFD, 0xFF little-endian is U+FFFD, a legitimately-encoded
+		// character, not a decode failure.
+		out, err := td.Decode([]byte{0xFD, 0xFF}, TextDecodeOptions{})
+		mustNoError(t, err)
+		mustEqual(t, "\uFFFD", out)
+	})
+
+	t.Run("LoneHighSurrogateThrows", func(t *testing.T) {
+		t.Parallel()
+		td := newFatalDecoder()
+
+		// 0x00, 0xD8 little-endian is an unpaired high surrogate.
+		_, err := td.Decode([]byte{0x00, 0xD8}, TextDecodeOptions{})
+		mustError(t, err)
+	})
+
+	t.Run("LoneLowSurrogateThrows", func(t *testing.T) {
+		t.Parallel()
+		td := newFatalDecoder()
+
+		// 0x00, 0xDC little-endian is an unpaired low surrogate.
+		_, err := td.Decode([]byte{0x00, 0xDC}, TextDecodeOptions{})
+		mustError(t, err)
+	})
 }
 
 func TestTextDecoderUTF16LEStreamingSingleByteWindow(t *testing.T) {
