@@ -76,7 +76,9 @@ func NewTextDecoder(label string, options TextDecoderOptions) (*TextDecoder, err
 	// Step 1: Let encoding be the result of getting an encoding from label.
 	var enc Name
 	var decoder encoding.Encoding
-	switch strings.TrimSpace(strings.ToLower(label)) {
+	// Trim ASCII whitespace only (TAB, LF, FF, CR, SPACE); it's narrower than
+	// Unicode whitespace, which get-an-encoding's label trimming step needs.
+	switch strings.Trim(strings.ToLower(label), "\t\n\f\r ") {
 	case "",
 		"unicode-1-1-utf-8",
 		"unicode11utf8",
