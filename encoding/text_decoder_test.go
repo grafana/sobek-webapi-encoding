@@ -207,3 +207,19 @@ func TestTextDecoderUTF16LEStreamingSingleByteWindow(t *testing.T) {
 
 	mustEqual(t, expected, out.String())
 }
+
+// TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd guards against an
+// off-by-one in exportArrayBuffer's DataView bounds check that rejected a
+// valid zero-length DataView placed exactly at the end of its buffer.
+func TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd(t *testing.T) {
+	t.Parallel()
+
+	ts := newTestSetup(t)
+
+	v, err := ts.rt.RunScript("test.js", `
+		const decoder = new TextDecoder();
+		decoder.decode(new DataView(new ArrayBuffer(4), 4, 0));
+	`)
+	mustNoError(t, err)
+	mustEqual(t, "", v.String())
+}
