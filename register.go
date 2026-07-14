@@ -8,6 +8,10 @@ import (
 )
 
 // RegisterGlobally exposes the encoding TextDecoder/TextEncoder constructors in the provided sobek runtime.
+//
+// See [encoding.RegisterRuntime] for a required caveat about rt's field name
+// mapper: without one configured, TextDecoder options such as "fatal" are
+// silently ignored.
 func RegisterGlobally(rt *sobek.Runtime) error {
 	return encoding.RegisterRuntime(rt)
 }
