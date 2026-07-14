@@ -223,3 +223,26 @@ func TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd(t *testing.T) {
 	mustNoError(t, err)
 	mustEqual(t, "", v.String())
 }
+
+// TestTextDecoderConstructorSymbolLabelThrowsTypeError guards against
+// the TextDecoder constructor throwing a RangeError for a Symbol label,
+// which per WebIDL USVString conversion rules should be a TypeError since a
+// Symbol cannot be coerced to a string at all.
+func TestTextDecoderConstructorSymbolLabelThrowsTypeError(t *testing.T) {
+	t.Parallel()
+
+	ts := newTestSetup(t)
+
+	_, err := ts.rt.RunScript("test.js", `
+		let threw;
+		try {
+			new TextDecoder(Symbol("x"));
+		} catch (e) {
+			threw = e;
+		}
+		if (!(threw instanceof TypeError)) {
+			throw new Error("expected a TypeError, got " + threw);
+		}
+	`)
+	mustNoError(t, err)
+}

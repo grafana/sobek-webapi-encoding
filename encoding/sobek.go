@@ -28,6 +28,14 @@ func bindTextDecoder(rt *sobek.Runtime) error {
 	constructor := func(call sobek.ConstructorCall) *sobek.Object {
 		label := "utf-8"
 		if arg := call.Argument(0); arg != nil && !isNullish(arg) {
+			// Per the WebIDL USVString conversion rules, a Symbol cannot be
+			// coerced to a string and must throw a TypeError; unlike real
+			// string coercion, sobek's ExportTo would otherwise silently
+			// convert it to its description instead of erroring.
+			if _, isSymbol := arg.(*sobek.Symbol); isSymbol {
+				throwAsJSError(rt, NewError(TypeError, "the provided label value cannot be converted to a string"))
+			}
+
 			if err := rt.ExportTo(arg, &label); err != nil {
 				throwAsJSError(rt, NewError(RangeError, "extracting label from the first argument: "+err.Error()))
 			}
