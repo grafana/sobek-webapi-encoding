@@ -85,6 +85,13 @@ const wptRuntimeCompatPolyfill = `
 		globalThis.self = globalThis;
 	}
 
+	// common/subset-tests.js reads location.search to support splitting a
+	// test file into variants; sobek has no location global and none of the
+	// vendored tests use variants, so an empty search string is sufficient.
+	if (typeof globalThis.location === "undefined") {
+		globalThis.location = {search: ""};
+	}
+
 	// common/sab.js detects SharedArrayBuffer support via
 	// "new WebAssembly.Memory({shared: true, ...}).buffer.constructor".
 	// sobek implements neither WebAssembly nor SharedArrayBuffer, so
