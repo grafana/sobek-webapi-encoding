@@ -348,6 +348,18 @@ func (td *TextDecoder) resetState() {
 //
 // This function implements the "replacement" error mode behavior where malformed
 // byte sequences are replaced with the Unicode replacement character (U+FFFD).
+//
+// This duplicates validation logic golang.org/x/text/encoding/unicode's own
+// UTF-8 decoder already contains, but that decoder's Transform cannot be used
+// here directly: when it is short on source bytes and atEOF is false, it
+// always waits for more data via transform.ErrShortSrc, even if the bytes
+// already available prove the sequence malformed (e.g. a lead byte followed
+// by a byte outside the valid continuation range). It only resolves such a
+// sequence once atEOF is true. The WHATWG spec instead requires detecting an
+// invalid continuation byte as soon as it is seen, independent of whether the
+// caller is still streaming (see TestTextDecoderUTF8StreamingStateMachine's
+// IncompleteThenInvalidContinuation case). Hence this package needs its own
+// incremental scan rather than delegating to the transform's error signal.
 func sanitizeUTF8Bytes(data []byte, stream bool) (processed []byte, leftover []byte, hadInvalid bool) {
 	if len(data) == 0 {
 		return nil, nil, false
