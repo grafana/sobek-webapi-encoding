@@ -1,6 +1,8 @@
 package encoding
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -89,6 +91,9 @@ func executeTestScripts(ts *testSetup, scripts []testScript) error {
 		//nolint:forbidigo // os.ReadFile is acceptable for locally vendored fixtures.
 		contents, err := os.ReadFile(fullPath)
 		if err != nil {
+			if errors.Is(err, os.ErrNotExist) { //nolint:forbidigo // checking for a not-exist error, not calling an os I/O function.
+				return fmt.Errorf("WPT fixture %s not found; run scripts/sync-wpt.sh to fetch WPT test fixtures before running tests: %w", fullPath, err)
+			}
 			return err
 		}
 

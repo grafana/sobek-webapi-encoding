@@ -13,16 +13,16 @@ func TestTextDecoder(t *testing.T) {
 	t.Parallel()
 	base := wptPath("encoding")
 	scripts := []testScript{
-		{base: base, path: "textdecoder-arguments.js"},
-		{base: base, path: "textdecoder-byte-order-marks.js"},
-		{base: base, path: "textdecoder-copy.js"},
-		{base: base, path: "textdecoder-eof.js"},
-		{base: base, path: "textdecoder-fatal.js"},
-		{base: base, path: "textdecoder-fatal-streaming.js"},
-		{base: base, path: "textdecoder-ignorebom.js"},
-		{base: base, path: "textdecoder-labels.js"},
-		{base: base, path: "textdecoder-streaming.js"},
-		{base: base, path: "textdecoder-utf16-surrogates.js"},
+		{base: base, path: "textdecoder-arguments.any.js"},
+		{base: base, path: "textdecoder-byte-order-marks.any.js"},
+		{base: base, path: "textdecoder-copy.any.js"},
+		{base: base, path: "textdecoder-eof.any.js"},
+		{base: base, path: "textdecoder-fatal.any.js"},
+		{base: base, path: "textdecoder-fatal-streaming.any.js"},
+		{base: base, path: "textdecoder-ignorebom.any.js"},
+		{base: base, path: "textdecoder-labels.any.js"},
+		{base: base, path: "textdecoder-streaming.any.js"},
+		{base: base, path: "textdecoder-utf16-surrogates.any.js"},
 	}
 
 	ts := newTestSetup(t)

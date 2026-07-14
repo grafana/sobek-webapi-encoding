@@ -10,8 +10,8 @@ func TestTextEncoder(t *testing.T) {
 	t.Parallel()
 	base := wptPath("encoding")
 	scripts := []testScript{
-		{base: base, path: "textencoder-constructor-non-utf.js"},
-		{base: base, path: "textencoder-utf16-surrogates.js"},
+		{base: base, path: "textencoder-constructor-non-utf.any.js"},
+		{base: base, path: "textencoder-utf16-surrogates.any.js"},
 	}
 
 	ts := newTestSetup(t)
