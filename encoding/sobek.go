@@ -194,7 +194,12 @@ func setReadOnlyPropertyOf(obj *sobek.Object, name string, value sobek.Value) er
 }
 
 // exportArrayBuffer interprets the given value as an ArrayBuffer, TypedArray or DataView
-// and returns a copy of the underlying byte slice.
+// and returns the underlying byte slice.
+//
+// The returned slice aliases the ArrayBuffer's live backing store; it is not
+// a copy. Callers that need to retain the data beyond the current call (or
+// across a point where JS code could run and mutate the buffer) must copy it
+// themselves.
 func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 	if isNullish(v) {
 		return []byte{}, nil
