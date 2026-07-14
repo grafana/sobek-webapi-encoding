@@ -193,7 +193,6 @@ func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 
 	var ab sobek.ArrayBuffer
 	var ok bool
-	var region []byte
 
 	switch {
 	case IsTypedArray(rt, v):
@@ -215,7 +214,7 @@ func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 		if end > int64(len(allBytes)) {
 			end = int64(len(allBytes))
 		}
-		region = allBytes[byteOffset:end]
+		return allBytes[byteOffset:end], nil
 	case IsInstanceOf(rt, v, DataViewConstructor):
 		// Handle DataView objects
 		ab, ok = asObject.Get("buffer").Export().(sobek.ArrayBuffer)
@@ -237,16 +236,15 @@ func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 		if end > int64(len(allBytes)) {
 			end = int64(len(allBytes))
 		}
-		region = allBytes[byteOffset:end]
+		return allBytes[byteOffset:end], nil
 	default:
 		ab, ok = asObject.Export().(sobek.ArrayBuffer)
 		if !ok {
 			return nil, errors.New("data is not an ArrayBuffer, typed array, or DataView")
 		}
-		region = ab.Bytes()
 	}
 
-	return region, nil
+	return ab.Bytes(), nil
 }
 
 // IsInstanceOf returns true if the given value is an instance of the given constructor
