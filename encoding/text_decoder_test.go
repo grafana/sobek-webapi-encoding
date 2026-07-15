@@ -238,8 +238,8 @@ func TestTextDecoderUTF16LEStreamingSingleByteWindow(t *testing.T) {
 }
 
 // TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd guards against an
-// off-by-one in exportArrayBuffer's DataView bounds check that rejected a
-// valid zero-length DataView placed exactly at the end of its buffer.
+// off-by-one in exportArrayBuffer's byte extraction that rejected a valid
+// zero-length DataView placed exactly at the end of its buffer.
 func TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd(t *testing.T) {
 	t.Parallel()
 
@@ -259,11 +259,11 @@ func TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd(t *testing.T) {
 // visible through the returned slice. Callers that need to retain the data
 // past a point where JS code could run must copy it themselves.
 func TestExportArrayBufferAliasesBuffer(t *testing.T) {
-  t.Parallel()
+	t.Parallel()
 
-  ts := newTestSetup(t)
+	ts := newTestSetup(t)
 
-  v, err := ts.rt.RunScript("test.js", `
+	v, err := ts.rt.RunScript("test.js", `
   var buf = new ArrayBuffer(3);
   var view = new Uint8Array(buf);
   view[0] = 1;
@@ -271,16 +271,16 @@ func TestExportArrayBufferAliasesBuffer(t *testing.T) {
   view[2] = 3;
   view;
   `)
-  mustNoError(t, err)
+	mustNoError(t, err)
 
-  data, err := exportArrayBuffer(ts.rt, v)
-  mustNoError(t, err)
-  mustEqual(t, string([]byte{1, 2, 3}), string(data))
+	data, err := exportArrayBuffer(ts.rt, v)
+	mustNoError(t, err)
+	mustEqual(t, string([]byte{1, 2, 3}), string(data))
 
-  _, err = ts.rt.RunScript("mutate.js", `view[0] = 0xFF; view[1] = 0xFF; view[2] = 0xFF;`)
-  mustNoError(t, err)
+	_, err = ts.rt.RunScript("mutate.js", `view[0] = 0xFF; view[1] = 0xFF; view[2] = 0xFF;`)
+	mustNoError(t, err)
 
-  mustEqual(t, string([]byte{0xFF, 0xFF, 0xFF}), string(data))
+	mustEqual(t, string([]byte{0xFF, 0xFF, 0xFF}), string(data))
 }
 
 // TestTextDecoderConstructorSymbolLabelThrowsTypeError guards against
