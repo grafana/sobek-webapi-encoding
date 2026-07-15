@@ -20,7 +20,7 @@ profile.cov
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# WPT fixtures fetched by scripts/sync-wpt.sh (see wpt.json's target_dir)
+# WPT fixtures fetched by scripts/sync-wpt.sh
 /wpt/
 
 # Go workspace file
