@@ -194,151 +194,20 @@ func setReadOnlyPropertyOf(obj *sobek.Object, name string, value sobek.Value) er
 }
 
 // exportArrayBuffer interprets the given value as an ArrayBuffer, TypedArray or DataView
-// and returns the underlying byte slice.
-//
-// The returned slice aliases the ArrayBuffer's live backing store; it is not
-// a copy. Callers that need to retain the data beyond the current call (or
-// across a point where JS code could run and mutate the buffer) must copy it
-// themselves.
+// and returns the underlying byte slice, backed by the original data (no copy is
+// performed, per [sobek.Runtime.ExportTo]'s documented behavior for these types).
 func exportArrayBuffer(rt *sobek.Runtime, v sobek.Value) ([]byte, error) {
 	if isNullish(v) {
 		return []byte{}, nil
 	}
 
-	asObject := v.ToObject(rt)
-
-	var ab sobek.ArrayBuffer
-	var ok bool
-
-	switch {
-	case IsTypedArray(rt, v):
-		ab, ok = asObject.Get("buffer").Export().(sobek.ArrayBuffer)
-		if !ok {
-			return nil, errors.New("typed array buffer is not an ArrayBuffer")
-		}
-
-		// Handle TypedArray views that may have byteOffset/byteLength (e.g., subarrays)
-		byteOffset := asObject.Get("byteOffset").ToInteger()
-		byteLength := asObject.Get("byteLength").ToInteger()
-
-		allBytes := ab.Bytes()
-		if byteOffset < 0 || byteOffset > int64(len(allBytes)) {
-			return nil, errors.New("typed array byte offset out of bounds")
-		}
-
-		end := byteOffset + byteLength
-		if end > int64(len(allBytes)) {
-			end = int64(len(allBytes))
-		}
-		return allBytes[byteOffset:end], nil
-	case IsInstanceOf(rt, v, DataViewConstructor):
-		// Handle DataView objects
-		ab, ok = asObject.Get("buffer").Export().(sobek.ArrayBuffer)
-		if !ok {
-			return nil, errors.New("data view buffer is not an ArrayBuffer")
-		}
-
-		// Get the byte offset and length from the DataView
-		byteOffset := asObject.Get("byteOffset").ToInteger()
-		byteLength := asObject.Get("byteLength").ToInteger()
-
-		// Extract the relevant portion of the ArrayBuffer
-		allBytes := ab.Bytes()
-		if byteOffset < 0 || byteOffset > int64(len(allBytes)) {
-			return nil, errors.New("data view byte offset out of bounds")
-		}
-
-		end := byteOffset + byteLength
-		if end > int64(len(allBytes)) {
-			end = int64(len(allBytes))
-		}
-		return allBytes[byteOffset:end], nil
-	default:
-		ab, ok = asObject.Export().(sobek.ArrayBuffer)
-		if !ok {
-			return nil, errors.New("data is not an ArrayBuffer, typed array, or DataView")
-		}
+	var data []byte
+	if err := rt.ExportTo(v, &data); err != nil {
+		return nil, errors.New("data is not an ArrayBuffer, typed array, or DataView")
 	}
 
-	return ab.Bytes(), nil
+	return data, nil
 }
-
-// IsInstanceOf returns true if the given value is an instance of the given constructor
-// This uses the technique described in https://github.com/dop251/sobek/issues/379#issuecomment-1164441879
-func IsInstanceOf(rt *sobek.Runtime, v sobek.Value, instanceOf ...JSType) bool {
-	var valid bool
-
-	for _, t := range instanceOf {
-		instanceOfConstructor := rt.Get(string(t))
-		if valid = v.ToObject(rt).Get("constructor").SameAs(instanceOfConstructor); valid {
-			break
-		}
-	}
-
-	return valid
-}
-
-// IsTypedArray returns true if the given value is an instance of a Typed Array
-func IsTypedArray(rt *sobek.Runtime, v sobek.Value) bool {
-	asObject := v.ToObject(rt)
-
-	typedArrayTypes := []JSType{
-		Int8ArrayConstructor,
-		Uint8ArrayConstructor,
-		Uint8ClampedArrayConstructor,
-		Int16ArrayConstructor,
-		Uint16ArrayConstructor,
-		Int32ArrayConstructor,
-		Uint32ArrayConstructor,
-		Float32ArrayConstructor,
-		Float64ArrayConstructor,
-		BigInt64ArrayConstructor,
-		BigUint64ArrayConstructor,
-	}
-
-	return IsInstanceOf(rt, asObject, typedArrayTypes...)
-}
-
-// JSType is a string representing a JavaScript type
-type JSType string
-
-const (
-	// DataViewConstructor is the name of the DataView constructor
-	DataViewConstructor = "DataView"
-
-	// Int8ArrayConstructor is the name of the Int8ArrayConstructor constructor
-	Int8ArrayConstructor = "Int8Array"
-
-	// Uint8ArrayConstructor is the name of the Uint8ArrayConstructor constructor
-	Uint8ArrayConstructor = "Uint8Array"
-
-	// Uint8ClampedArrayConstructor is the name of the Uint8ClampedArrayConstructor constructor
-	Uint8ClampedArrayConstructor = "Uint8ClampedArray"
-
-	// Int16ArrayConstructor is the name of the Int16ArrayConstructor constructor
-	Int16ArrayConstructor = "Int16Array"
-
-	// Uint16ArrayConstructor is the name of the Uint16ArrayConstructor constructor
-	Uint16ArrayConstructor = "Uint16Array"
-
-	// Int32ArrayConstructor is the name of the Int32ArrayConstructor constructor
-	Int32ArrayConstructor = "Int32Array"
-
-	// Uint32ArrayConstructor is the name of the Uint32ArrayConstructor constructor
-	Uint32ArrayConstructor = "Uint32Array"
-
-	// Float32ArrayConstructor is the name of the Float32ArrayConstructor constructor
-	Float32ArrayConstructor = "Float32Array"
-
-	// Float64ArrayConstructor is the name of the Float64ArrayConstructor constructor
-	Float64ArrayConstructor = "Float64Array"
-
-	// BigInt64ArrayConstructor is the name of the BigInt64ArrayConstructor constructor
-	BigInt64ArrayConstructor = "BigInt64Array"
-
-	// BigUint64ArrayConstructor is the name of the BigUint64ArrayConstructor constructor
-	BigUint64ArrayConstructor = "BigUint64Array"
-)
 
 func isNullish(v sobek.Value) bool {
 	return v == nil || sobek.IsUndefined(v) || sobek.IsNull(v)
