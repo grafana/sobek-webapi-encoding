@@ -172,6 +172,35 @@ func TestTextDecoderUTF16FatalStreaming(t *testing.T) {
 		mustNoError(t, err)
 		mustEqual(t, "\u0000", out)
 	})
+
+	t.Run("LegitimateReplacementCharacterDoesNotThrow", func(t *testing.T) {
+		t.Parallel()
+		td := newFatalDecoder()
+
+		// 0xFD, 0xFF little-endian is U+FFFD, a legitimately-encoded
+		// character, not a decode failure.
+		out, err := td.Decode([]byte{0xFD, 0xFF}, TextDecodeOptions{})
+		mustNoError(t, err)
+		mustEqual(t, "\uFFFD", out)
+	})
+
+	t.Run("LoneHighSurrogateThrows", func(t *testing.T) {
+		t.Parallel()
+		td := newFatalDecoder()
+
+		// 0x00, 0xD8 little-endian is an unpaired high surrogate.
+		_, err := td.Decode([]byte{0x00, 0xD8}, TextDecodeOptions{})
+		mustError(t, err)
+	})
+
+	t.Run("LoneLowSurrogateThrows", func(t *testing.T) {
+		t.Parallel()
+		td := newFatalDecoder()
+
+		// 0x00, 0xDC little-endian is an unpaired low surrogate.
+		_, err := td.Decode([]byte{0x00, 0xDC}, TextDecodeOptions{})
+		mustError(t, err)
+	})
 }
 
 func TestTextDecoderUTF16LEStreamingSingleByteWindow(t *testing.T) {
@@ -206,4 +235,73 @@ func TestTextDecoderUTF16LEStreamingSingleByteWindow(t *testing.T) {
 	out.WriteString(part)
 
 	mustEqual(t, expected, out.String())
+}
+
+// TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd guards against an
+// off-by-one in exportArrayBuffer's byte extraction that rejected a valid
+// zero-length DataView placed exactly at the end of its buffer.
+func TestTextDecoderDecodeZeroLengthDataViewAtBufferEnd(t *testing.T) {
+	t.Parallel()
+
+	ts := newTestSetup(t)
+
+	v, err := ts.rt.RunScript("test.js", `
+		const decoder = new TextDecoder();
+		decoder.decode(new DataView(new ArrayBuffer(4), 4, 0));
+	`)
+	mustNoError(t, err)
+	mustEqual(t, "", v.String())
+}
+
+// TestExportArrayBufferAliasesBuffer guards exportArrayBuffer's documented
+// contract that it returns a slice aliasing the live ArrayBuffer's backing
+// store, not a copy: mutating the source buffer after the call must be
+// visible through the returned slice. Callers that need to retain the data
+// past a point where JS code could run must copy it themselves.
+func TestExportArrayBufferAliasesBuffer(t *testing.T) {
+	t.Parallel()
+
+	ts := newTestSetup(t)
+
+	v, err := ts.rt.RunScript("test.js", `
+  var buf = new ArrayBuffer(3);
+  var view = new Uint8Array(buf);
+  view[0] = 1;
+  view[1] = 2;
+  view[2] = 3;
+  view;
+  `)
+	mustNoError(t, err)
+
+	data, err := exportArrayBuffer(ts.rt, v)
+	mustNoError(t, err)
+	mustEqual(t, string([]byte{1, 2, 3}), string(data))
+
+	_, err = ts.rt.RunScript("mutate.js", `view[0] = 0xFF; view[1] = 0xFF; view[2] = 0xFF;`)
+	mustNoError(t, err)
+
+	mustEqual(t, string([]byte{0xFF, 0xFF, 0xFF}), string(data))
+}
+
+// TestTextDecoderConstructorSymbolLabelThrowsTypeError guards against
+// the TextDecoder constructor throwing a RangeError for a Symbol label,
+// which per WebIDL USVString conversion rules should be a TypeError since a
+// Symbol cannot be coerced to a string at all.
+func TestTextDecoderConstructorSymbolLabelThrowsTypeError(t *testing.T) {
+	t.Parallel()
+
+	ts := newTestSetup(t)
+
+	_, err := ts.rt.RunScript("test.js", `
+		let threw;
+		try {
+			new TextDecoder(Symbol("x"));
+		} catch (e) {
+			threw = e;
+		}
+		if (!(threw instanceof TypeError)) {
+			throw new Error("expected a TypeError, got " + threw);
+		}
+	`)
+	mustNoError(t, err)
 }
