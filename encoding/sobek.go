@@ -11,9 +11,10 @@ import (
 //
 // It does not configure rt's [sobek.FieldNameMapper]: doing so unconditionally
 // would override a mapper the host application may have already set for its
-// own purposes. Callers must set a mapper that resolves this package's
-// "fatal"/"ignoreBOM"/"stream" JSON tags (e.g. via
-// rt.SetFieldNameMapper(sobek.TagFieldNameMapper("json", true))) before
+// own purposes. Callers must set a mapper that resolves this package's "js"
+// (or equivalent "json") tags for "fatal", "ignoreBOM", and "stream". For
+// example, configure
+// rt.SetFieldNameMapper(sobek.TagFieldNameMapper("js", true)) before
 // registering, or TextDecoder/TextDecoder.decode options will be silently
 // ignored. See the package documentation for details.
 func RegisterRuntime(rt *sobek.Runtime) error {

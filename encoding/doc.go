@@ -14,19 +14,20 @@
 // # Usage
 //
 // RegisterRuntime reads TextDecoder/TextDecoder.decode options (e.g. "fatal",
-// "ignoreBOM", "stream") from JS objects by matching their lowercase spec
-// names against this package's Go struct fields. Sobek only does that
-// matching when a [sobek.FieldNameMapper] is configured on the runtime, and
+// "ignoreBOM", "stream") from JS objects by matching their spec names against
+// this package's Go struct fields. Sobek only does that matching when a
+// [sobek.FieldNameMapper] is configured on the runtime, and
 // RegisterRuntime deliberately leaves that choice to the caller: it is a
 // runtime-wide setting, and forcing one here would override a field name
 // mapper the host application has already configured for its own use (for
 // example a JS runtime embedding sobek for other purposes). Callers must set
-// one themselves, such as [sobek.TagFieldNameMapper] configured for the
-// "json" tag used by this package's option structs, before relying on any
-// TextDecoder option:
+// one themselves, such as [sobek.TagFieldNameMapper] configured for the "js"
+// tag used by this package's option structs, before relying on any TextDecoder
+// option. The option structs retain equivalent "json" tags for callers that
+// already use a JSON-tag mapper.
 //
 //	rt := sobek.New()
-//	rt.SetFieldNameMapper(sobek.TagFieldNameMapper("json", true))
+//	rt.SetFieldNameMapper(sobek.TagFieldNameMapper("js", true))
 //	if err := encoding.RegisterRuntime(rt); err != nil {
 //	    log.Fatal(err)
 //	}
