@@ -43,7 +43,11 @@ func wptFixturesPresent() bool {
 func runSyncWPT() error {
 	root := computeRepoRoot()
 
-	cmd := exec.CommandContext(context.Background(), "scripts/sync-wpt.sh")
+	// Invoke the script through bash explicitly rather than executing it
+	// directly: Windows has no shebang support, so running the file itself
+	// fails there even though Git for Windows' bash.exe (which GitHub's
+	// windows-latest runners provide) is on PATH.
+	cmd := exec.CommandContext(context.Background(), "bash", "scripts/sync-wpt.sh")
 	cmd.Dir = root
 
 	if err := cmd.Run(); err != nil {
