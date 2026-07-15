@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #
 # sync-wpt fetches a handful of Web Platform Tests directories from a
-# pinned upstream commit and writes them under wpt/, applying every patch
-# under patches/ afterward.
+# pinned upstream commit and writes them under wpt/.
 #
 # It checks out whole directories (encoding, common, resources) from a
 # throwaway git clone: a cone-mode sparse-checkout limits the working tree
@@ -50,9 +49,6 @@ if [ ! -d "$root" ]; then
   echo "sync-wpt: repo root not found: $root" >&2
   exit 1
 fi
-# Canonicalize to an absolute path so paths built from $root below (like the
-# patch paths) resolve correctly even after `git -C "$root"` shifts the
-# working directory a later command runs in.
 root="$(cd "$root" && pwd)"
 
 clone_dir="$(mktemp -d)"
@@ -81,11 +77,3 @@ for dir in "${dirs[@]}"; do
   cp -R "$src" "$dst"
   echo "synced: $dir -> $target_dir/$dir"
 done
-
-while IFS= read -r -d '' patch; do
-  if ! git -C "$root" apply "$patch" </dev/null; then
-    echo "sync-wpt: failed to apply patch $patch" >&2
-    exit 1
-  fi
-  echo "patched: $patch"
-done < <(find "$root/patches" -name '*.patch' -print0 | sort -z)
