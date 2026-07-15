@@ -3,6 +3,15 @@
   "target_dir": "wpt",
   "files": [
     {
+      "src": "encoding/api-basics.any.js"
+    },
+    {
+      "src": "encoding/api-invalid-label.any.js"
+    },
+    {
+      "src": "encoding/api-surrogates-utf8.any.js"
+    },
+    {
       "src": "encoding/textdecoder-arguments.any.js"
     },
     {
@@ -39,16 +48,16 @@
       "src": "encoding/textencoder-utf16-surrogates.any.js"
     },
     {
-      "src": "encoding/resources/encodings.js",
-      "patch": "patches/encoding/resources/encodings.js.patch"
+      "src": "encoding/resources/encodings.js"
     },
     {
-      "src": "common/sab.js",
-      "patch": "patches/common/sab.js.patch"
+      "src": "common/sab.js"
     },
     {
-      "src": "resources/testharness.js",
-      "patch": "patches/resources/testharness.js.patch"
+      "src": "common/subset-tests.js"
+    },
+    {
+      "src": "resources/testharness.js"
     }
   ]
 }
