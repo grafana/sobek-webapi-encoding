@@ -1,9 +1,10 @@
 module github.com/grafana/sobek-webapi-encoding
 
-go 1.25.0
+go 1.25.4
 
 require (
 	github.com/grafana/sobek v0.0.0-20260619084854-f843f46048fd
+	github.com/oleiade/wptsync v1.1.0
 	golang.org/x/text v0.38.0
 )
 

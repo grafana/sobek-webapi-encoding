@@ -1,13 +1,29 @@
 package encoding
 
 import (
+	"context"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/grafana/sobek"
+	"github.com/oleiade/wptsync"
 )
+
+// TestMain syncs the WPT test fixtures before running the package's tests,
+// so a fresh checkout doesn't need a separate manual fetch step.
+func TestMain(m *testing.M) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	if err := wptsync.Sync(ctx, "../wpt.json", nil); err != nil {
+		cancel()
+		log.Fatalf("syncing WPT test fixtures: %v", err)
+	}
+	cancel()
+	os.Exit(m.Run())
+}
 
 // testScript is a helper struct holding the base path
 // and the path of a test script.

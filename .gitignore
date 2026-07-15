@@ -20,6 +20,9 @@ profile.cov
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# WPT fixtures synced by wptsync (see wpt.json's target_dir)
+/wpt/
+
 # Go workspace file
 go.work
 go.work.sum
