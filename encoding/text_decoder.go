@@ -333,10 +333,7 @@ func (td *TextDecoder) applyTransform(input []byte, atEOF bool) (string, int, er
 		return "", 0, nil
 	}
 
-	destSize := len(input)*utf8MaxBytesPerCodePoint + minTransformBufferSize
-	if destSize < minTransformBufferSize {
-		destSize = minTransformBufferSize
-	}
+	destSize := max(len(input)*utf8MaxBytesPerCodePoint+minTransformBufferSize, minTransformBufferSize)
 	dest := make([]byte, destSize)
 
 	var (

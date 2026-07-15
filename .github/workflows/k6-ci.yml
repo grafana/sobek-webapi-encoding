@@ -1,0 +1,21 @@
+# Copy to .github/workflows/k6-ci.yml. Pin @main to a SHA; Renovate keeps it updated.
+# See grafana/k6-ci/README.md for details.
+name: k6 CI
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: grafana/k6-ci/.github/workflows/all.yml@143ec80c1678ae96a54b82389ea862d4748c27e1 # v0.3.0
+    with:
+      # This repo is a Go library consumed via RegisterRuntime, not an xk6 extension.
+      skip-extension-testing: true
+      # Pinned to the same SHA as the `uses:` line above for a fully reproducible lint config.
+      k6-ci-ref: 143ec80c1678ae96a54b82389ea862d4748c27e1

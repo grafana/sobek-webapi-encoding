@@ -23,6 +23,10 @@ profile.cov
 # WPT fixtures fetched by scripts/sync-wpt.sh
 /wpt/
 
+# golangci-lint config materialized locally by `make lint`; see grafana/k6-ci
+/.golangci-base.yml
+/.golangci.yml
+
 # Go workspace file
 go.work
 go.work.sum
