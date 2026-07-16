@@ -33,11 +33,11 @@ type TextDecoderOptions struct {
 	//
 	// It defaults to false, which means that the decoder will substitute
 	// malformed data with a replacement character (U+FFFD).
-	Fatal bool `json:"fatal"`
+	Fatal bool `json:"fatal" js:"fatal"`
 
 	// IgnoreBOM holds a boolean value indicating whether the byte order
 	// mark (BOM) is ignored.
-	IgnoreBOM bool `json:"ignoreBOM"`
+	IgnoreBOM bool `json:"ignoreBOM" js:"ignoreBOM"`
 }
 
 // TextDecoderCommon represents the common subset of the TextDecoder interface
@@ -524,5 +524,5 @@ type TextDecodeOptions struct {
 	//
 	// Set to true if processing the data in chunks, and
 	// false for the final chunk or if the data is not chunked.
-	Stream bool `json:"stream"`
+	Stream bool `json:"stream" js:"stream"`
 }

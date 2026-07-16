@@ -75,3 +75,46 @@ func TestRegisterGloballyFatalOption(t *testing.T) {
 		t.Fatalf("unexpected error running script: %v", err)
 	}
 }
+
+// TestRegisterGloballyJSOptions guards the option names used by k6's
+// JavaScript field-name mapper.
+func TestRegisterGloballyJSOptions(t *testing.T) {
+	t.Parallel()
+
+	rt := sobek.New()
+	rt.SetFieldNameMapper(sobek.TagFieldNameMapper("js", true))
+
+	if err := RegisterGlobally(rt); err != nil {
+		t.Fatalf("RegisterGlobally returned an unexpected error: %v", err)
+	}
+
+	_, err := rt.RunString(`
+		const decoder = new TextDecoder("utf-8", {
+			fatal: true,
+			ignoreBOM: true,
+		});
+		if (decoder.fatal !== true) {
+			throw new Error("expected decoder.fatal to be true");
+		}
+		if (decoder.ignoreBOM !== true) {
+			throw new Error("expected decoder.ignoreBOM to be true");
+		}
+
+		const streamingDecoder = new TextDecoder();
+		const first = streamingDecoder.decode(
+			new Uint8Array([0xE2, 0x82]),
+			{ stream: true },
+		);
+		if (first !== "") {
+			throw new Error("expected incomplete streaming input to be buffered");
+		}
+
+		const second = streamingDecoder.decode(new Uint8Array([0xAC]));
+		if (second !== "€") {
+			throw new Error("expected buffered streaming input to decode to the euro sign");
+		}
+	`)
+	if err != nil {
+		t.Fatalf("unexpected error running script: %v", err)
+	}
+}
