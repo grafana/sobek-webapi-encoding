@@ -3,9 +3,16 @@
   "packageRules": [
     {
       "description": "Keep indirect Go modules aligned with k6",
-      "matchManagers": ["gomod"],
-      "matchDepTypes": ["indirect"],
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepTypes": [
+        "indirect"
+      ],
       "enabled": false
     }
+  ],
+  "extends": [
+    "github>grafana/grafana-renovate-config//presets/k6/k6-engine-automerge.json"
   ]
 }
