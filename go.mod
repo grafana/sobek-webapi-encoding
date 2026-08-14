@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/grafana/sobek v0.0.0-20260708062710-267a0e055bb4
-	golang.org/x/text v0.40.0
+	golang.org/x/text v0.41.0
 )
 
 require (
