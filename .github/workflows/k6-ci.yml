@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   ci:
-    uses: grafana/k6-ci/.github/workflows/all.yml@4437a05286b70dbd87d6bce2bea5220694a40474 # v0.5.2
+    uses: grafana/k6-ci/.github/workflows/all.yml@7dc7a71c57a30eddd3f1591ee0cc5abaeedafa14 # v0.5.4
     with:
       # This repo is a Go library consumed via RegisterRuntime, not an xk6 extension.
       skip-extension-testing: true
